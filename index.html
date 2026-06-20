@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>핏매니저 | 헬스장 관리 & 출입 키오스크</title>
+  <!-- Google Fonts for premium typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Remix Icon for clean vector UI icons -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="logo-area">
+        <i class="ri-heart-pulse-fill logo-icon"></i>
+        <div class="logo-text">
+          <h1>FIT MANAGER</h1>
+          <span>ADMIN PORTAL</span>
+        </div>
+      </div>
+      <nav class="nav-menu">
+        <button class="nav-btn active" data-tab="kiosk">
+          <i class="ri-keypad-line"></i>
+          <span>출입 키오스크</span>
+        </button>
+        <button class="nav-btn" data-tab="members">
+          <i class="ri-user-settings-line"></i>
+          <span>회원 정보 관리</span>
+        </button>
+        <button class="nav-btn" data-tab="register">
+          <i class="ri-user-add-line"></i>
+          <span>신규 회원 등록</span>
+        </button>
+        <button class="nav-btn" data-tab="logs">
+          <i class="ri-history-line"></i>
+          <span>출입 기록 조회</span>
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <p>오늘의 입장: <span id="today-checkins-count">0</span>명</p>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Header Bar -->
+      <header class="content-header">
+        <h2 id="current-tab-title">출입 키오스크</h2>
+        <div class="system-time" id="system-time">2026. 06. 20. (토) 10:00:00</div>
+      </header>
+
+      <!-- TAB 1: KIOSK (Check-in/out) -->
+      <section class="tab-panel active" id="tab-kiosk">
+        <div class="kiosk-grid">
+          <!-- Kiosk Terminal Input Panel -->
+          <div class="kiosk-panel glass">
+            <div class="kiosk-instruction">
+              <h3>출입을 환영합니다</h3>
+              <p>등록하신 휴대폰 번호를 입력해 주세요</p>
+            </div>
+            
+            <div class="phone-display-container">
+              <input type="text" id="phone-display" readonly placeholder="010-0000-0000">
+            </div>
+
+            <div class="keypad-grid">
+              <button class="keypad-btn">1</button>
+              <button class="keypad-btn">2</button>
+              <button class="keypad-btn">3</button>
+              <button class="keypad-btn">4</button>
+              <button class="keypad-btn">5</button>
+              <button class="keypad-btn">6</button>
+              <button class="keypad-btn">7</button>
+              <button class="keypad-btn">8</button>
+              <button class="keypad-btn">9</button>
+              <button class="keypad-btn text-btn" id="btn-clear">Clear</button>
+              <button class="keypad-btn">0</button>
+              <button class="keypad-btn text-btn" id="btn-backspace"><i class="ri-backspace-line"></i></button>
+            </div>
+
+            <div class="kiosk-actions">
+              <button class="action-btn check-in-btn" id="btn-checkin">
+                <i class="ri-login-box-line"></i>
+                <span>입 실</span>
+              </button>
+              <button class="action-btn check-out-btn" id="btn-checkout">
+                <i class="ri-logout-box-line"></i>
+                <span>퇴 실</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Kiosk Log & Status Card -->
+          <div class="status-panel glass">
+            <div class="status-header">
+              <h3>최근 출입 상태</h3>
+            </div>
+            <div class="status-display" id="kiosk-result-card">
+              <div class="status-placeholder">
+                <i class="ri-fingerprint-line"></i>
+                <p>번호를 입력하고 입/퇴실 버튼을 누르면여기에 결과가 표시됩니다.</p>
+              </div>
+            </div>
+            <div class="mini-logs">
+              <h4>최근 입장 회원</h4>
+              <ul class="mini-logs-list" id="mini-logs-list">
+                <!-- Dynamically loaded -->
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: MEMBERS DIRECTORY -->
+      <section class="tab-panel" id="tab-members">
+        <div class="panel-card glass">
+          <div class="panel-card-header">
+            <div class="search-box">
+              <i class="ri-search-line"></i>
+              <input type="text" id="member-search-input" placeholder="이름 또는 전화번호로 검색...">
+            </div>
+            <span class="total-count-badge">총 회원: <span id="total-members-count">0</span>명</span>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>이름</th>
+                  <th>생년월일</th>
+                  <th>전화번호</th>
+                  <th>남은 이용권 일수</th>
+                  <th>등록일</th>
+                  <th class="actions-header">관리</th>
+                </tr>
+              </thead>
+              <tbody id="member-table-body">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: NEW MEMBER REGISTRATION -->
+      <section class="tab-panel" id="tab-register">
+        <div class="form-container glass">
+          <div class="form-header">
+            <h3>신규 회원 정보 입력</h3>
+            <p>새로운 헬스장 회원의 인적사항 및 이용권 정보를 등록합니다.</p>
+          </div>
+          <form id="member-register-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="reg-name"><i class="ri-user-line"></i> 이름</label>
+                <input type="text" id="reg-name" required placeholder="예: 홍길동">
+              </div>
+              <div class="form-group">
+                <label for="reg-birth"><i class="ri-calendar-line"></i> 생년월일</label>
+                <input type="text" id="reg-birth" required placeholder="예: 1995-03-15" maxlength="10">
+              </div>
+              <div class="form-group">
+                <label for="reg-phone"><i class="ri-phone-line"></i> 전화번호</label>
+                <input type="tel" id="reg-phone" required placeholder="예: 010-1234-5678" maxlength="13">
+              </div>
+              <div class="form-group">
+                <label for="reg-days"><i class="ri-time-line"></i> 이용권 등록 일수</label>
+                <input type="number" id="reg-days" required min="1" max="9999" placeholder="예: 30" value="30">
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="reset" class="form-btn reset-btn">초기화</button>
+              <button type="submit" class="form-btn submit-btn">회원 등록</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- TAB 4: ATTENDANCE LOGS -->
+      <section class="tab-panel" id="tab-logs">
+        <div class="panel-card glass">
+          <div class="panel-card-header">
+            <div class="search-box">
+              <i class="ri-search-line"></i>
+              <input type="text" id="log-search-input" placeholder="전화번호 또는 이름 검색...">
+            </div>
+            <div class="filter-group">
+              <button class="filter-btn active" data-filter="all">전체</button>
+              <button class="filter-btn" data-filter="CHECK_IN">입실</button>
+              <button class="filter-btn" data-filter="CHECK_OUT">퇴실</button>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>시간</th>
+                  <th>이름</th>
+                  <th>전화번호</th>
+                  <th>구분</th>
+                  <th>인덱스 코드</th>
+                </tr>
+              </thead>
+              <tbody id="logs-table-body">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Member Edit Modal -->
+  <div class="modal" id="edit-member-modal">
+    <div class="modal-content glass">
+      <div class="modal-header">
+        <h3>회원 정보 수정</h3>
+        <button class="close-modal-btn" id="close-modal"><i class="ri-close-line"></i></button>
+      </div>
+      <form id="member-edit-form">
+        <input type="hidden" id="edit-id">
+        <div class="form-group">
+          <label for="edit-name">이름</label>
+          <input type="text" id="edit-name" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-birth">생년월일</label>
+          <input type="text" id="edit-birth" required placeholder="예: 1995-03-15" maxlength="10">
+        </div>
+        <div class="form-group">
+          <label for="edit-phone">전화번호</label>
+          <input type="tel" id="edit-phone" required maxlength="13">
+        </div>
+        <div class="form-group">
+          <label for="edit-days">남은 이용권 일수</label>
+          <input type="number" id="edit-days" required min="0">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="form-btn reset-btn" id="btn-cancel-edit">취소</button>
+          <button type="submit" class="form-btn submit-btn">수정 완료</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast-notification">
+    <div class="toast-body">
+      <i class="ri-checkbox-circle-fill toast-icon" id="toast-icon"></i>
+      <span class="toast-message" id="toast-message">메시지 내용입니다.</span>
+    </div>
+  </div>
+  <script src="renderer.js"></script>
+</body>
+</html>
