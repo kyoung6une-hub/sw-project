@@ -16,6 +16,123 @@ window.onunhandledrejection = function (event) {
   }
 };
 
+// Browser/GitHub Pages fallback Mock API (Dual-Mode Hybrid Support)
+if (!window.api) {
+  console.log('Running in Web Browser mode. Exposing localStorage Mock API.');
+  window.api = {
+    getMembers: async () => {
+      const data = localStorage.getItem('gym_members');
+      return data ? JSON.parse(data) : [];
+    },
+    addMember: async (memberData) => {
+      const data = localStorage.getItem('gym_members');
+      const members = data ? JSON.parse(data) : [];
+      const exists = members.some(m => m.phone === memberData.phone);
+      if (exists) return { success: false, error: '이미 등록된 전화번호입니다.' };
+      
+      const newMember = {
+        id: Date.now().toString(),
+        name: memberData.name,
+        birthdate: memberData.birthdate,
+        phone: memberData.phone,
+        remaining_days: parseInt(memberData.remaining_days, 10) || 0,
+        created_at: new Date().toISOString()
+      };
+      members.push(newMember);
+      localStorage.setItem('gym_members', JSON.stringify(members));
+      return { success: true, member: newMember };
+    },
+    updateMember: async (updatedData) => {
+      const data = localStorage.getItem('gym_members');
+      const members = data ? JSON.parse(data) : [];
+      const index = members.findIndex(m => m.id === updatedData.id);
+      if (index === -1) return { success: false, error: '회원을 찾을 수 없습니다.' };
+      
+      const duplicate = members.some(m => m.phone === updatedData.phone && m.id !== updatedData.id);
+      if (duplicate) return { success: false, error: '이미 등록된 전화번호입니다.' };
+      
+      members[index] = {
+        ...members[index],
+        name: updatedData.name,
+        birthdate: updatedData.birthdate,
+        phone: updatedData.phone,
+        remaining_days: parseInt(updatedData.remaining_days, 10) || 0
+      };
+      localStorage.setItem('gym_members', JSON.stringify(members));
+      return { success: true, member: members[index] };
+    },
+    deleteMember: async (memberId) => {
+      const data = localStorage.getItem('gym_members');
+      let members = data ? JSON.parse(data) : [];
+      members = members.filter(m => m.id !== memberId);
+      localStorage.setItem('gym_members', JSON.stringify(members));
+      return { success: true };
+    },
+    checkIn: async (phone) => {
+      const data = localStorage.getItem('gym_members');
+      const members = data ? JSON.parse(data) : [];
+      const index = members.findIndex(m => m.phone === phone);
+      if (index === -1) return { success: false, error: '등록되지 않은 전화번호입니다.' };
+      
+      const member = members[index];
+      if (member.remaining_days <= 0) return { success: false, error: '남은 이용권이 없습니다. 재등록이 필요합니다.' };
+      
+      member.remaining_days -= 1;
+      localStorage.setItem('gym_members', JSON.stringify(members));
+      
+      const logsData = localStorage.getItem('gym_logs');
+      const logs = logsData ? JSON.parse(logsData) : [];
+      const log = {
+        id: Date.now().toString(),
+        phone: member.phone,
+        name: member.name,
+        type: 'CHECK_IN',
+        timestamp: new Date().toISOString()
+      };
+      logs.push(log);
+      localStorage.setItem('gym_logs', JSON.stringify(logs));
+      
+      return { 
+        success: true, 
+        member, 
+        message: `${member.name}님, 입실 완료되었습니다. (남은 이용권: ${member.remaining_days}일)` 
+      };
+    },
+    checkOut: async (phone) => {
+      const data = localStorage.getItem('gym_members');
+      const members = data ? JSON.parse(data) : [];
+      const member = members.find(m => m.phone === phone);
+      if (!member) return { success: false, error: '등록되지 않은 전화번호입니다.' };
+      
+      const logsData = localStorage.getItem('gym_logs');
+      const logs = logsData ? JSON.parse(logsData) : [];
+      const log = {
+        id: Date.now().toString(),
+        phone: member.phone,
+        name: member.name,
+        type: 'CHECK_OUT',
+        timestamp: new Date().toISOString()
+      };
+      logs.push(log);
+      localStorage.setItem('gym_logs', JSON.stringify(logs));
+      
+      return { 
+        success: true, 
+        member, 
+        message: `${member.name}님, 퇴실 완료되었습니다. 오늘 하루도 수고하셨습니다!` 
+      };
+    },
+    getLogs: async () => {
+      const data = localStorage.getItem('gym_logs');
+      const logs = data ? JSON.parse(data) : [];
+      return logs.reverse();
+    },
+    logError: (message) => {
+      console.error('[BROWSER ERROR]:', message);
+    }
+  };
+}
+
 // Global State
 let activeTab = 'kiosk';
 let rawPhoneInput = '';
